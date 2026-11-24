@@ -1,0 +1,7 @@
+export const FORMS=["Silk","Orbit","Wave","Knot","Sphere","Cube"];
+export const GESTURES=["Point","Pinch","Open","Fist","Peace","Swipe"];
+export const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,(a.z||0)-(b.z||0));
+export function classify(p){if(!p||p.length!==21)return null;const palm=Math.max(.02,d(p[0],p[9]));if(d(p[4],p[8])/palm<.36)return "Pinch";const [i,m,r,l]=[8,12,16,20].map(n=>d(p[0],p[n])>d(p[0],p[n-2])*1.17);if(i&&m&&r&&l)return "Open";if(i&&m&&!r&&!l)return "Peace";if(i&&!m&&!r&&!l)return "Point";if(!i&&!m&&!r&&!l)return "Fist";return null}
+export function estimatedDepth(palm,reference=0.17){return clamp(4*reference/Math.max(.035,palm),2.1,6.5)}
+export function point(form,u,v,w){const a=u*Math.PI*2,b=v*Math.PI*2;switch(form){case "Silk":return [(u-.5)*3.0,(v-.5)*2.2+.32*Math.sin(a*2+b),.4*Math.sin(a+b*2)];case "Orbit":return [(1.02+.34*Math.cos(b))*Math.cos(a),.34*Math.sin(b),(1.02+.34*Math.cos(b))*Math.sin(a)];case "Wave":return [(u-.5)*3.1,.4*Math.sin(a*2+b)+.24*Math.cos(b*2),(v-.5)*2.8];case "Knot":{const c=.75+.28*Math.cos(3*a);return [c*Math.cos(2*a)+.13*Math.cos(b),c*Math.sin(2*a)+.13*Math.sin(b),.52*Math.sin(3*a)+.13*Math.cos(b+a)];}case "Cube":{const face=Math.min(5,Math.floor(w*6)),q=(u-.5)*2,r=(v-.5)*2;return face<2?[face===0?-1:1,q,r]:face<4?[q,face===2?-1:1,r]:[q,r,face===4?-1:1];}default:{const y=2*v-1,s=Math.sqrt(Math.max(0,1-y*y));return [1.25*s*Math.cos(a),1.25*y,1.25*s*Math.sin(a)];}}}

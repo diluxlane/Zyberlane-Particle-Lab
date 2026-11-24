@@ -1,0 +1,11 @@
+import * as T from "three";
+import {clamp} from "./logic.js";
+const x90=new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),-Math.PI/2),z=new T.Vector3(0,0,1),euler=new T.Euler(0,0,0,"YXZ"),rad=Math.PI/180;
+export class Motion{
+ constructor(camera,report){this.camera=camera;this.report=report;this.raw=null;this.reference=new T.Quaternion();this.target=new T.Quaternion();this.yaw=0;this.pitch=0;this.enabled=false;this.pending=false;this.smoothing=12;this.listener=e=>{if(!this.enabled||![e.alpha,e.beta,e.gamma].every(Number.isFinite))return;const q=new T.Quaternion().setFromEuler(euler.set(e.beta*rad,e.alpha*rad,-e.gamma*rad,"YXZ")).multiply(x90).multiply(new T.Quaternion().setFromAxisAngle(z,-(screen.orientation?.angle??window.orientation??0)*rad));if(!this.raw){this.reference.copy(q).invert();this.report("Motion active",true)}this.raw=q;};}
+ async toggle(){if(this.pending)return;if(this.enabled){this.stop();return}this.pending=true;try{const D=window.DeviceOrientationEvent;if(!D)throw Error("Motion sensor unavailable");if(typeof D.requestPermission==="function"&&await D.requestPermission()!=="granted")throw Error("Motion permission denied");if(document.hidden)throw Error("Motion paused");this.enabled=true;this.raw=null;this.yaw=0;this.pitch=0;this.report("Waiting for motion…",true);window.addEventListener("deviceorientation",this.listener);this.timer=setTimeout(()=>{if(!this.raw)this.stop("No heading readings. Drag to look.")},3500)}catch(e){this.stop(e.message)}finally{this.pending=false}}
+ stop(message="Touch look"){clearTimeout(this.timer);window.removeEventListener("deviceorientation",this.listener);this.enabled=false;this.raw=null;this.yaw=0;this.pitch=0;this.report(message,false)}
+ center(){this.yaw=0;this.pitch=0;if(this.raw)this.reference.copy(this.raw).invert();this.camera.quaternion.identity();}
+ drag(dx,dy){this.yaw-=dx*.004;this.pitch=clamp(this.pitch-dy*.004,-Math.PI/2+.01,Math.PI/2-.01);}
+ update(dt){const drag=new T.Quaternion().setFromEuler(euler.set(this.pitch,this.yaw,0,"YXZ"));this.target.copy(drag);if(this.enabled&&this.raw)this.target.multiply(this.reference).multiply(this.raw);this.camera.quaternion.slerp(this.target,1-Math.exp(-dt*this.smoothing));}
+}

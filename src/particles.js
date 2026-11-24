@@ -1,0 +1,15 @@
+import * as T from "three";
+import {FORMS,point} from "./logic.js";
+const N=10000;
+export class Sculpture{
+ constructor(scene){this.geometry=new T.BufferGeometry();this.from=new Float32Array(N*3);this.to=new Float32Array(N*3);this.seed=new Float32Array(N*3);let seed=173;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};for(let i=0;i<N;i++){this.seed.set([rnd(),rnd(),rnd()],i*3)}this.fill("Silk",this.to);this.from.set(this.to);this.geometry.setAttribute("position",new T.BufferAttribute(this.from,3));this.geometry.setAttribute("target",new T.BufferAttribute(this.to,3));this.geometry.setAttribute("seed",new T.BufferAttribute(this.seed,3));this.u={mixValue:{value:1},clock:{value:0},pointer:{value:new T.Vector3(100,100,100)},pull:{value:0},pulse:{value:0},direction:{value:new T.Vector3()},pixelRatio:{value:1}};
+ const vertex=`attribute vec3 target,seed;uniform float mixValue,clock,pull,pulse,pixelRatio;uniform vec3 pointer,direction;varying float brightness;void main(){vec3 p=mix(position,target,smoothstep(0.,1.,mixValue));p+=.045*vec3(sin(clock*.8+seed.x*12.),sin(clock*.65+seed.y*12.),cos(clock*.72+seed.z*12.));vec3 delta=p-pointer;float d=length(delta);float influence=exp(-d*d*3.0);p+=normalize(delta+vec3(.0001))*influence*(pull>0.?-min(d*.8,.7):.55);p+=pulse*(normalize(p+vec3(.001))*.65+direction*.5)*(.25+seed.z*.7);vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;gl_PointSize=clamp((2.2+seed.y*1.8)*pixelRatio*4./max(.6,-mv.z),1.,8.*pixelRatio);brightness=.42+seed.x*.58+influence*.55;}`;
+ const fragment=`varying float brightness;void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;float a=pow(max(0.,1.-d*d),1.5);gl_FragColor=vec4(vec3(.83,.89,.96)*brightness,a*.82);}`;
+ this.material=new T.ShaderMaterial({uniforms:this.u,vertexShader:vertex,fragmentShader:fragment,transparent:true,depthWrite:false,blending:T.AdditiveBlending});this.object=new T.Points(this.geometry,this.material);this.object.position.set(0,0,-4);this.object.frustumCulled=false;scene.add(this.object);this.form="Silk";}
+ fill(form,buffer){for(let i=0;i<N;i++){const k=i*3;buffer.set(point(form,this.seed[k],this.seed[k+1],this.seed[k+2]),k)}}
+ select(form){if(!FORMS.includes(form)||this.form===form)return;const t=this.u.mixValue.value,s=t*t*(3-2*t);for(let i=0;i<this.from.length;i++)this.from[i]+=(this.to[i]-this.from[i])*s;this.fill(form,this.to);this.geometry.attributes.position.needsUpdate=true;this.geometry.attributes.target.needsUpdate=true;this.u.mixValue.value=0;this.form=form;}
+ interact(world,pull=false){if(!world){this.u.pointer.value.set(100,100,100);this.u.pull.value=0;return}this.u.pointer.value.copy(world).sub(this.object.position);this.u.pull.value=pull?1:0;}
+ burst(direction=new T.Vector3()){this.u.pulse.value=1;this.u.direction.value.copy(direction).normalize();}
+ quality(low,ratio){this.geometry.setDrawRange(0,low?6000:N);this.u.pixelRatio.value=ratio;}
+ update(dt,t){this.u.clock.value=t;this.u.mixValue.value=Math.min(1,this.u.mixValue.value+dt*1.6);this.u.pulse.value*=Math.exp(-dt*3);}
+}
