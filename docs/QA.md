@@ -12,3 +12,6 @@ Pending on a real HTTPS deployment:
 - [ ] Profile sustained FPS, latency, temperature, memory; tune quality before sign-off.
 
 No physical-device results or deployment success are asserted.
+
+## Regression checks
+Verify slow horizontal movement, tilted starting poses, compass/relative source switching, generic sensors where available, and smooth heading continuity. Check mesh lines, spring pull/release, ripples and all six shape changes. Record rendering and hand-tracking FPS separately.

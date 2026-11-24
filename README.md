@@ -1,6 +1,6 @@
 # Zyberlane Spatial Particle Lab
 
-Standalone experiment 002 in Zyberlane XR / Labs. Six original GPU particle sculptures, orientation-based 360° viewing, touch fallback, a rear-camera driven digital skeleton and phone stereo view.
+Standalone experiment 002 in Zyberlane XR / Labs. Six connected, worker-simulated elastic mesh sculptures, orientation-based 360° viewing, touch fallback, a rear-camera driven digital skeleton and phone stereo view.
 
 ## Develop
 Node.js 22 LTS recommended. Run `npm install`, `npm run dev`, `npm test`, and `npm run build`. Vercel uses Vite and the dist directory. The build copies pinned MediaPipe WASM and bundles the classic inference worker. First camera use downloads the versioned model from Google; the application does not send camera images to any service.
@@ -18,3 +18,6 @@ Open in an HTTPS browser. Select a form, enable Motion, recenter, then enable Re
 
 ## Release checks
 `npm test` covers pure shape/depth/classification logic and runs during build. See [QA checklist](docs/QA.md).
+
+## Motion and mesh revision
+The browser selects responsive relative, absolute or supported Generic Sensor quaternion streams. Tilt-only and touch fallback remain explicit. Mesh physics uses connected points and edges, local springs, pinches, directional ripples, release momentum, and wheel torsion in a worker. Camera uses frame-driven capture (up to requested 30 FPS), a single outstanding inference, and a measured hand-detection rate. Actual sustained frame rate and accuracy require device testing. Reference behavior: mesh. public demo and gesture-particle; no upstream copyrighted code included.
